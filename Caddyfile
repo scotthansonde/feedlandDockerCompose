@@ -1,0 +1,14 @@
+{
+  # Use staging to avoid rate limits while testing.
+  # Remove this block (or comment it out) when you're ready for a real cert.
+#  acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+{$FEEDLAND_DOMAIN} {
+     @websockets {
+             header Connection *Upgrade*
+             header Upgrade    websocket
+     }
+     reverse_proxy @websockets feedland:1462
+     reverse_proxy feedland:1452
+}

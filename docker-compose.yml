@@ -1,0 +1,105 @@
+services:
+  
+  render_config:
+    image: alpine:3.20.3
+    container_name: render_config
+    restart: "no"
+    environment:
+      FEEDLAND_DOMAIN: ${FEEDLAND_DOMAIN}      
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER_PASSWORD: ${MYSQL_USER_PASSWORD}
+
+    volumes:
+      - ./templates/config.template.json:/in/config.template.json:ro
+      - ./scripts/render-config.sh:/scripts/render-config.sh:ro
+      - ./:/out
+    command: ["/bin/sh", "/scripts/render-config.sh"]
+    networks:
+      - feedlandnet
+
+  feedland:
+    image: scotthansonde/feedland
+    container_name: feedland
+    stdin_open: true
+    tty: true
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      TZ: Europe/Berlin
+    volumes:
+      - ./config.json:/project/config.json:ro
+      - feedland_data:/project/privateFiles
+    ports:
+      - "1452:1452"
+      - "1462:1462"
+    restart: unless-stopped
+    networks:
+      - feedlandnet
+
+  mysql:
+    image: mysql:8.4.7
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    # Allow remote connections only on localhost
+    # To allow remote connections from other hosts, change to "- 3306:3306"
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - db_init:/docker-entrypoint-initdb.d
+      - ./mysql/conf.d:/etc/mysql/conf.d:ro
+    depends_on:
+      init_sql:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -uroot -p$$MYSQL_ROOT_PASSWORD -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    networks:
+      - feedlandnet
+
+  init_sql:
+    image: alpine:3.20.3
+    restart: "no"
+    environment:
+      FEEDLAND_DB: feedland
+      FEEDLAND_USER: feedland
+      FEEDLAND_PASSWORD: ${MYSQL_USER_PASSWORD}
+      SETUP_SQL_URL: https://raw.githubusercontent.com/scripting/feedlandInstall/refs/heads/main/docs/setup.sql
+    volumes:
+      - db_init:/work
+      - ./scripts/init-sql.sh:/init-sql.sh:ro
+    command: ["/bin/sh", "/init-sql.sh"]
+    networks:
+      - feedlandnet
+
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: caddy
+    profiles: ["caddy"]
+    restart: unless-stopped
+    environment:
+      FEEDLAND_DOMAIN: ${FEEDLAND_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - feedlandnet
+
+volumes:
+  mysql_data:
+  feedland_data:
+  caddy_data:
+  caddy_config:
+  db_init:
+
+networks:
+  feedlandnet:
