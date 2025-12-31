@@ -37,4 +37,5 @@ do the following:
     to show the contents of the `pendingConfirmations` table.
   * Copy the `magicString` value for the new, pending user, and insert it into a URL that looks like: `http://"$FEEDLAND_DOMAIN"/userconfirms?emailConfirmCode=MAGIC_STRING_HERE`
   * Submit that URL in your browser and enjoy!
+
 (adapted from [DOCKER.md](https://github.com/cshotton/feedlandInstall/blob/main/DOCKER.md) by Chuck Schotton)
