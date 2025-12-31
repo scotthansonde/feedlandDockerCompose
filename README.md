@@ -22,3 +22,19 @@ Restart the servers with `docker compose restart`. Stop the servers with `docker
 
 Once started, additional values can be added to config.json. An existing config.json will not be overwritten when starting or restarting the server.
 
+### FeedLand E-Mail Validation
+Some users running a local Feedland instance may not have the ability or desire to connect Feedland with an email service. As a shortcut to getting a new user added to the system, you can
+do the following:
+
+  * Sign up for a new user, and enter a username and email address
+  * FeedLand will report an error sending email, but still create a new record in its `pendingConfirmations` table
+  * From the folder containing docker-compose.yml run 
+    ```
+    docker exec -it mysql_db \. 
+    mysql -u feedland -p"$MYSQL_USER_PASSWORD" feedland \. 
+    -e "SELECT * FROM pendingConfirmations\G"
+    ``` 
+    to show the contents of the `pendingConfirmations` table.
+  * Copy the `magicString` value for the new, pending user, and insert it into a URL that looks like: `http://"$FEEDLAND_DOMAIN"/userconfirms?emailConfirmCode=MAGIC_STRING_HERE`
+  * Submit that URL in your browser and enjoy!
+(adapted from [DOCKER.md](https://github.com/cshotton/feedlandInstall/blob/main/DOCKER.md) by Chuck Schotton)
