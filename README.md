@@ -4,7 +4,7 @@
 ### Installation and start-up
 0. Prerequisites
     - A DNS entry pointing to your server
-    - Docker installed on your server (Steps 1 and 2 of this tutorial )
+    - Docker installed on your server (Steps 1 and 2 of [this tutorial](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-22-04) )
 1. Download this repo into a folder on your server
 2. Copy .env.example to .env and set the values
     - Set FEEDLAND_DOMAIN to your DNS entry
