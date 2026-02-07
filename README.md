@@ -10,9 +10,10 @@
     - Set FEEDLAND_DOMAIN to your DNS entry
     - Create passwords for MYSQL_ROOT_PASSWORD and MYSQL_USER_PASSWORD
     - If you want caddy to handle HTTPS set COMPOSE_PROFILES=caddy
-3. Run `docker compose up` from the folder containing docker-compose.yml
+3. Run `docker compose up -d` from the folder containing docker-compose.yml
 
 ### What this does 
+- `docker compose up -d` starts the containers in the background (detached mode), so the terminal is returned immediately and the containers keep running
 - A config.json file will be generated using the values from .env
 - A mysql server will be started and a feedland database will be initialized
 - A FeedLand server will be started using the generated config.json
