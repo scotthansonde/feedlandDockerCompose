@@ -1,42 +1,126 @@
-# FeedLand Docker Compose 
-## A Docker Compose file to quickly start an instance of [FeedLand](https://docs.feedland.com/)
+# FeedLand Docker Compose
 
-### Installation and start-up
-0. Prerequisites
-    - A DNS entry pointing to your server
-    - Docker installed on your server (Steps 1 and 2 of [this tutorial](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-22-04) )
-1. Download this repo into a folder on your server
-2. Copy .env.example to .env and set the values
-    - Set FEEDLAND_DOMAIN to your DNS entry
-    - Create passwords for MYSQL_ROOT_PASSWORD and MYSQL_USER_PASSWORD
-    - If you want caddy to handle HTTPS set COMPOSE_PROFILES=caddy
-3. Run `docker compose up -d` from the folder containing docker-compose.yml
+This project provides a simple Docker Compose setup to run:
+- a **FeedLand server**
+- a **MySQL server** for FeedLand data
+- optionally a **Caddy server** for HTTPS (if you enable the `caddy` compose profile)
 
-### What this does 
+---
+
+## One-step install (Linux/macOS)
+
+From the repo folder:
+
+```bash
+chmod +x install.sh scripts/init-env.sh
+./install.sh
+```
+
+The installer will:
+- Prompt for `FEEDLAND_DOMAIN` (example: `feed.example.com`)
+- Create `.env` from `.env.example` if needed
+- Generate strong random MySQL passwords (if missing/placeholders)
+- Start the stack with `docker compose up -d`
+
+### Non-interactive install (Linux/macOS)
+
+If you want to run without prompts (e.g. automation), set the domain as an environment variable:
+
+```bash
+FEEDLAND_DOMAIN=feed.example.com ./install.sh
+```
+
+---
+
+## Windows notes
+
+The `.sh` installer works best from:
+- **WSL (recommended)**, or
+- **Git Bash** (often works)
+
+### Windows PowerShell fallback (no prompt)
+
+In PowerShell, you can do the equivalent without `install.sh` prompts:
+
+```powershell
+# From the repo root
+$env:FEEDLAND_DOMAIN = "feed.example.com"
+
+# Run the env initializer (requires Git Bash or WSL for the .sh script)
+bash ./scripts/init-env.sh
+
+# Ensure FEEDLAND_DOMAIN is in .env (append if missing)
+if (-not (Select-String -Path ".env" -Pattern "^FEEDLAND_DOMAIN=" -Quiet)) {
+  Add-Content -Path ".env" -Value "`nFEEDLAND_DOMAIN=$env:FEEDLAND_DOMAIN"
+}
+
+docker compose up -d
+```
+
+> Tip: If you don’t have `bash` available on Windows, install WSL or Git for Windows (Git Bash), then rerun the Linux/macOS steps.
+
+---
+
+## What this does
+
+- `./install.sh` prepares `.env` and starts the stack
 - `docker compose up -d` starts the containers in the background (detached mode), so the terminal is returned immediately and the containers keep running
-- A config.json file will be generated using the values from .env
-- A mysql server will be started and a feedland database will be initialized
-- A FeedLand server will be started using the generated config.json
-- If activated, a caddy server is started forwarding https to the FeedLand instance
+- A `config.json` file can be generated using the values from `.env` (depending on how your FeedLand image/startup is configured)
+- A MySQL server will be started and a `feedland` database can be initialized (depending on your compose configuration)
+- A FeedLand server will be started
+- If activated, a Caddy server can be started forwarding HTTPS to the FeedLand instance
 
-Restart the servers with `docker compose restart`. Stop the servers with `docker compose down`. 
+---
 
-Once started, additional values can be added to config.json. An existing config.json will not be overwritten when starting or restarting the server.
+## Viewing the generated MySQL passwords later
 
-### FeedLand E-Mail Validation
-Some users running a local Feedland instance may not have the ability or desire to connect Feedland with an email service. As a shortcut to getting a new user added to the system, you can
-do the following:
+The generated credentials are stored in `.env`.
 
-  * Sign up for a new user, and enter a username and email address
-  * FeedLand will report an error sending email, but still create a new record in its `pendingConfirmations` table
-  * From the folder containing docker-compose.yml run 
-    ```
-    docker exec -it mysql_db \. 
-    mysql -u feedland -p"$MYSQL_USER_PASSWORD" feedland \. 
-    -e "SELECT * FROM pendingConfirmations\G"
-    ``` 
-    to show the contents of the `pendingConfirmations` table.
-  * Copy the `magicString` value for the new, pending user, and insert it into a URL that looks like: `http://"$FEEDLAND_DOMAIN"/userconfirms?emailConfirmCode=MAGIC_STRING_HERE`
-  * Submit that URL in your browser and enjoy!
+To display them:
 
-(adapted from [DOCKER.md](https://github.com/cshotton/feedlandInstall/blob/main/DOCKER.md) by Chuck Schotton)
+```bash
+grep '^MYSQL_\(ROOT_PASSWORD\|USER_PASSWORD\)=' .env
+```
+
+⚠️ Keep `.env` private and out of version control.
+
+---
+
+## Managing the services
+
+- View logs:
+  ```bash
+  docker compose logs -f
+  ```
+
+- Restart services:
+  ```bash
+  docker compose restart
+  ```
+
+- Stop services:
+  ```bash
+  docker compose down
+  ```
+
+---
+
+## Important notes about MySQL passwords
+
+MySQL environment variables are applied **only on first startup**, when the database volume is empty.
+
+If you change MySQL passwords in `.env` after MySQL has already been initialized, you must either:
+- Rotate the passwords inside MySQL manually, or
+- Remove the MySQL data volume and start fresh
+
+---
+
+## Security notes
+
+- Do **not** expose MySQL to the public internet unless you really need to
+- Keep `.env` private and backed up securely
+- Use HTTPS in production (via Caddy or another reverse proxy)
+
+---
+
+Enjoy your FeedLand instance!
