@@ -1,21 +1,25 @@
 services:
-  
-  render_config:
+  prep_config:
     image: alpine:3.20.3
-    container_name: render_config
+    container_name: prep_config
     restart: "no"
     environment:
-      FEEDLAND_DOMAIN: ${FEEDLAND_DOMAIN}      
+      FEEDLAND_DOMAIN: ${FEEDLAND_DOMAIN:?You must set FEEDLAND_DOMAIN in .env}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER_PASSWORD: ${MYSQL_USER_PASSWORD}
-
     volumes:
       - ./templates/config.template.json:/in/config.template.json:ro
+      - ./scripts/check-env.sh:/scripts/check-env.sh:ro
       - ./scripts/render-config.sh:/scripts/render-config.sh:ro
       - ./:/out
-    command: ["/bin/sh", "/scripts/render-config.sh"]
+    command: >
+      sh -lc '
+        /bin/sh /scripts/check-env.sh &&
+        /bin/sh /scripts/render-config.sh
+      '
     networks:
       - feedlandnet
+
 
   feedland:
     image: scotthansonde/feedland
@@ -23,6 +27,8 @@ services:
     stdin_open: true
     tty: true
     depends_on:
+      prep_config:
+        condition: service_completed_successfully
       mysql:
         condition: service_healthy
     environment:
@@ -53,6 +59,8 @@ services:
     depends_on:
       init_sql:
         condition: service_completed_successfully
+      prep_config:
+        condition: service_completed_successfully
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "mysql -uroot -p$$MYSQL_ROOT_PASSWORD -e 'SELECT 1' >/dev/null 2>&1"]
@@ -70,6 +78,9 @@ services:
       FEEDLAND_USER: feedland
       FEEDLAND_PASSWORD: ${MYSQL_USER_PASSWORD}
       SETUP_SQL_URL: https://raw.githubusercontent.com/scripting/feedlandInstall/refs/heads/main/docs/setup.sql
+    depends_on:
+      prep_config:
+        condition: service_completed_successfully
     volumes:
       - db_init:/work
       - ./scripts/init-sql.sh:/init-sql.sh:ro
@@ -84,6 +95,9 @@ services:
     restart: unless-stopped
     environment:
       FEEDLAND_DOMAIN: ${FEEDLAND_DOMAIN}
+    depends_on:
+      prep_config:
+          condition: service_completed_successfully
     ports:
       - "80:80"
       - "443:443"
