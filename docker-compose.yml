@@ -1,87 +1,64 @@
 services:
-  
-  render_config:
-    image: alpine:3.20.3
-    container_name: render_config
-    restart: "no"
+  # Fails fast if FEEDLAND_DOMAIN is missing or still the example value.
+  check:
+    image: alpine:3.20
     environment:
-      FEEDLAND_DOMAIN: ${FEEDLAND_DOMAIN}      
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_USER_PASSWORD: ${MYSQL_USER_PASSWORD}
-
-    volumes:
-      - ./templates/config.template.json:/in/config.template.json:ro
-      - ./scripts/render-config.sh:/scripts/render-config.sh:ro
-      - ./:/out
-    command: ["/bin/sh", "/scripts/render-config.sh"]
-    networks:
-      - feedlandnet
+      FEEDLAND_DOMAIN: ${FEEDLAND_DOMAIN:?You must set FEEDLAND_DOMAIN in .env}
+    command: >
+      sh -lc '
+        if [ -z "$FEEDLAND_DOMAIN" ]; then
+          echo "FEEDLAND_DOMAIN is not set. Set it in .env.";
+          exit 1;
+        fi;
+        if [ "$FEEDLAND_DOMAIN" = "feedland.example.com" ]; then
+          echo "FEEDLAND_DOMAIN is still the example value. Edit .env and set a real hostname.";
+          exit 1;
+        fi;
+        echo "FEEDLAND_DOMAIN looks good: $FEEDLAND_DOMAIN";
+      '
+    restart: "no"
 
   feedland:
-    image: scotthansonde/feedland
-    container_name: feedland
-    stdin_open: true
-    tty: true
+    image: ghcr.io/scotthansonde/feedlandtest
     depends_on:
+      check:
+        condition: service_completed_successfully
       mysql:
         condition: service_healthy
     environment:
-      TZ: Europe/Berlin
+      - TZ=Europe/Berlin
     volumes:
-      - ./config.json:/project/config.json:ro
       - feedland_data:/project/privateFiles
     ports:
       - "1452:1452"
       - "1462:1462"
     restart: unless-stopped
-    networks:
-      - feedlandnet
 
   mysql:
-    image: mysql:8.4.7
-    container_name: mysql_db
+    image: mysql:8.4
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    # Allow remote connections only on localhost
-    # To allow remote connections from other hosts, change to "- 3306:3306"
-    ports:
-      - "127.0.0.1:3306:3306"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: feedland
+      MYSQL_USER: feedland
+      MYSQL_PASSWORD: ${MYSQL_USER_PASSWORD:?Set MYSQL_USER_PASSWORD in .env}
     volumes:
       - mysql_data:/var/lib/mysql
-      - db_init:/docker-entrypoint-initdb.d
-      - ./mysql/conf.d:/etc/mysql/conf.d:ro
-    depends_on:
-      init_sql:
-        condition: service_completed_successfully
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "mysql -uroot -p$$MYSQL_ROOT_PASSWORD -e 'SELECT 1' >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD"]
       interval: 10s
       timeout: 5s
-      retries: 20
-    networks:
-      - feedlandnet
+      retries: 10
 
-  init_sql:
-    image: alpine:3.20.3
-    restart: "no"
-    environment:
-      FEEDLAND_DB: feedland
-      FEEDLAND_USER: feedland
-      FEEDLAND_PASSWORD: ${MYSQL_USER_PASSWORD}
-      SETUP_SQL_URL: https://raw.githubusercontent.com/scripting/feedlandInstall/refs/heads/main/docs/setup.sql
-    volumes:
-      - db_init:/work
-      - ./scripts/init-sql.sh:/init-sql.sh:ro
-    command: ["/bin/sh", "/init-sql.sh"]
-    networks:
-      - feedlandnet
-
+  # Optional HTTPS reverse proxy. Enable by setting COMPOSE_PROFILES=caddy in .env
   caddy:
-    image: caddy:2.8-alpine
-    container_name: caddy
+    image: caddy:2
     profiles: ["caddy"]
-    restart: unless-stopped
+    depends_on:
+      check:
+        condition: service_completed_successfully
+      feedland:
+        condition: service_started
     environment:
       FEEDLAND_DOMAIN: ${FEEDLAND_DOMAIN}
     ports:
@@ -91,15 +68,10 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
-    networks:
-      - feedlandnet
+    restart: unless-stopped
 
 volumes:
   mysql_data:
   feedland_data:
   caddy_data:
   caddy_config:
-  db_init:
-
-networks:
-  feedlandnet:
