@@ -1,0 +1,43 @@
+{
+    "whatIsThis": "A simple example config.json file for a FeedLand installation, with none of the extra features turned on.",
+
+    "port": 1452,
+
+    "flWebsocketEnabled": true,
+    "websocketPort": 1462,
+    "urlWebsocketServerForClient": "ws://localhost:1462/",
+
+    "myDomain": "localhost:1452",
+    "urlFeedlandApp": "http://localhost:1452/",
+    "urlServerForClient": "http://localhost:1452/",
+    "urlServerForEmail": "http://localhost:1452/",
+
+    "smtpHost": "smtp.mailhost.com",
+    "smtpPort": 587,
+    "smtpUsername": "bullman",
+    "smtpPassword": "getoutahere",
+
+    "mailSender": "bullmancuso@thefamily.org",
+    "confirmEmailSubject": "FeedLand confirmation",
+    "confirmationExpiresAfter": 86400,
+    "flUseDatabaseForConfirmations": true,
+
+    "database": {
+        "host": "mysql",
+        "port": 3306,
+        "user": "feedland",
+        "password": "${MYSQL_USER_PASSWORD}",
+        "charset": "utf8mb4",
+        "connectionLimit": 100,
+        "database": "feedland",
+        "debug": false,
+        "flLogQueries": false,
+        "flQueueAllRequests": false,
+        "flUseMySql2": true
+    },
+
+    "flEnableNewUsers": true,
+    "productName": "FeedLand",
+    "productNameForDisplay": "FeedLand",
+    "urlServerHomePageSource": "http://scripting.com/code/feedland/home/index.html"
+}
