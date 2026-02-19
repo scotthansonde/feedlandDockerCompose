@@ -5,7 +5,6 @@ set -e
 # Requires .env to be present with MYSQL_USER_PASSWORD set
 
 ENV_FILE=".env"
-CONFIG_FILE="config.json"
 
 if [ ! -f "$ENV_FILE" ]; then
   printf "Error: %s not found. Please run generate-env.sh first.\n" "$ENV_FILE" >&2
@@ -33,16 +32,11 @@ else
   ROW_COUNT=$(printf "%s\n" "$RESULT" | grep -c "^\*\*\*" || true)
   
   if [ "$ROW_COUNT" -gt 0 ]; then
-    # Extract urlServerForClient from config.json
-    URL_SERVER=""
-    if [ -f "$CONFIG_FILE" ]; then
-      if command -v jq >/dev/null 2>&1; then
-        URL_SERVER=$(jq -r '.urlServerForClient' "$CONFIG_FILE" 2>/dev/null || true)
-      fi
-    fi
+    printf "\nConfirmation URLs:\n"
+    # Extract urlRedirect from the result and use it to build URLs with magicStrings
+    URL_SERVER=$(printf "%s\n" "$RESULT" | grep "urlRedirect:" | head -1 | sed 's/.*urlRedirect: *//;s/ *$//')
     
     if [ -n "$URL_SERVER" ]; then
-      printf "\nConfirmation URLs:\n"
       # Extract all magicString values and print URLs
       printf "%s\n" "$RESULT" | grep "magicString:" | sed 's/.*magicString: *//;s/ *$//' | while read -r MAGIC_STRING; do
         if [ -n "$MAGIC_STRING" ]; then
