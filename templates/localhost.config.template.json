@@ -36,8 +36,30 @@
         "flUseMySql2": true
     },
 
-    "flEnableNewUsers": true,
-    "productName": "FeedLand",
-    "productNameForDisplay": "FeedLand",
-    "urlServerHomePageSource": "http://scripting.com/code/feedland/home/index.html"
+	"flUseTwitterIdentity": false,
+	"flEnableNewUsers": true,
+	"flBackupOnStartup": false,
+	
+	"flNewsProducts": false,
+	"flUserFeeds": false,
+	"flLikesFeeds": false,
+	
+	"urlForFeeds": "http://data.mydomain.com/feeds/",
+	"s3PathForFeeds": "/data.mydomain.com/feeds/",
+	"s3LikesPath": "/data.mydomain.com/likes/", 
+	"urlNewsProducts": "http://newsproducts.mydomain.com",
+	
+	"maxRiverItems": 175,
+	"maxNewFeedSubscriptions": 250,
+	
+	"flUpdateFeedsInBackground": true,
+	"minSecsBetwFeedChecks": 15,
+	
+	"productName": "FeedLand",
+	"productNameForDisplay": "FeedLand",
+	
+	"urlServerHomePageSource": "http://scripting.com/code/feedland/home/index.html",
+	
+	"flUseRiverCache": true,
+	"ctSecsLifeRiverCache": 300
 }

@@ -117,6 +117,12 @@ This is enforced by the `prep_config` service in `docker-compose.yml`.
 
 ## Common commands
 
+Restart the feedland server (for example, after chaning config.json):
+
+´´´bash
+docker compose restart feedland
+```
+
 View logs:
 
 ```bash
