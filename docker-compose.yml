@@ -4,7 +4,7 @@ services:
     container_name: prep_config
     restart: "no"
     environment:
-      FEEDLAND_DOMAIN: ${FEEDLAND_DOMAIN:?You must set FEEDLAND_DOMAIN in .env}
+      FEEDLAND_DOMAIN: ${FEEDLAND_DOMAIN:-}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER_PASSWORD: ${MYSQL_USER_PASSWORD}
     volumes:
