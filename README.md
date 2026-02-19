@@ -6,12 +6,13 @@ This repo provides a simple Docker Compose setup to run:
 - **FeedLand**
 - **MySQL** (for FeedLand data)
 - optional **Caddy** (HTTPS reverse proxy)
+- optional run FeedLand on localhost using HTTP on the default FeedLand port 1452
 
 ---
 
 ## Quick start
 
-You have two options:
+You have three options:
 
 ### Option 1: Manual `.env` (edit it yourself)
 
@@ -45,7 +46,27 @@ Then start:
 ```bash
 docker compose up -d
 ```
+
 ---
+
+### Option 3: Generate config.json for localhost development 
+
+This sets `FEEDLAND_DOMAIN` to localhost:1452,
+deactivates Caddy, and generates strong MySQL passwords:
+
+```bash
+chmod +x scripts/generate-env.sh --http-localhost
+./scripts/generate-env.sh
+```
+
+Then start:
+
+```bash
+docker compose up -d
+```
+
+---
+
 ## What this does
 
 - `docker compose up -d` starts the containers in the background (detached mode), so the terminal is returned once the containers have started
@@ -56,9 +77,9 @@ docker compose up -d
     - The `feedland` database will be initialized 
   - The generated database passwords are stored in `.env`
 - A FeedLand server will be started
-- If activated, a Caddy server can be started forwarding HTTPS to the FeedLand instance
+- If activated, a Caddy server can be started to forward HTTPS to the FeedLand instance
 
-
+`config.json` can be extended or edited to meet your needs. 
 ---
 
 ## Enabling Caddy later
