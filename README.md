@@ -55,8 +55,8 @@ This sets `FEEDLAND_DOMAIN` to localhost:1452,
 deactivates Caddy, and generates strong MySQL passwords:
 
 ```bash
-chmod +x scripts/generate-env.sh --http-localhost
-./scripts/generate-env.sh
+chmod +x scripts/generate-env.sh
+./scripts/generate-env.sh --http-localhost
 ```
 
 Then start:
