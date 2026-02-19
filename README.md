@@ -142,13 +142,13 @@ do the following:
   * Sign up for a new user, and enter a username and email address
   * FeedLand will report an error sending email, but still create a new record in its `pendingConfirmations` table
   * From the folder containing docker-compose.yml run 
-    ```
-    docker exec -it mysql_db \. 
-    mysql -u feedland -p"$MYSQL_USER_PASSWORD" feedland \. 
-    -e "SELECT * FROM pendingConfirmations\G"
+    ```bash
+    ./scripts/query-pending-confirmations.sh
     ``` 
-    to show the contents of the `pendingConfirmations` table.
-  * Copy the `magicString` value for the new, pending user, and insert it into a URL that looks like: `http://"$FEEDLAND_DOMAIN"/userconfirms?emailConfirmCode=MAGIC_STRING_HERE`
-  * Submit that URL in your browser and enjoy!
+    This will show the pending confirmations and automatically generate the confirmation URL(s) using the `magicString` value(s) from `config.json`. The generated URLs will look like:
+    ```
+    http://"$FEEDLAND_DOMAIN"/userconfirms?emailConfirmCode=MAGIC_STRING_HERE
+    ```
+  * Copy the confirmation URL and submit it in your browser and enjoy!
 
 (adapted from [DOCKER.md](https://github.com/cshotton/feedlandInstall/blob/main/DOCKER.md) by Chuck Schotton)
