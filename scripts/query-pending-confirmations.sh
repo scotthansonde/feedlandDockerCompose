@@ -4,7 +4,7 @@ set -e
 # Queries the MySQL database for pending email confirmations
 # Requires .env to be present with MYSQL_USER_PASSWORD set
 
-ENV_FILE=".env"
+ENV_FILE="./.env"
 
 if [ ! -f "$ENV_FILE" ]; then
   printf "Error: %s not found. Please run generate-env.sh first.\n" "$ENV_FILE" >&2
